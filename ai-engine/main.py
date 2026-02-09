@@ -362,13 +362,16 @@ async def analyze_symptoms_with_image(
                 detail="Please provide symptoms for analysis"
             )
         
-        # Build comprehensive prompt
-        prompt = f"""You are an expert AI medical diagnostic assistant analyzing patient symptoms and medical images.
+        # Build comprehensive medical analysis prompt
+        prompt = f"""You are Dr. AI, an expert medical diagnostic assistant with extensive training in clinical medicine, pathology, and differential diagnosis. You are analyzing a patient's case for a rural healthcare setting in India.
 
-**Patient Information:**
-- Symptoms: {', '.join(symptoms_list) if symptoms_list else 'Not specified'}
-- Duration: {duration if duration else 'Not specified'}
-- Additional Information: {additional_info if additional_info else 'None provided'}
+**PATIENT CASE:**
+📋 Chief Complaints: {', '.join(symptoms_list) if symptoms_list else 'Not specified'}
+⏱️ Duration: {duration if duration else 'Not specified'}
+📝 Additional History: {additional_info if additional_info else 'None provided'}
+
+**YOUR TASK:**
+Provide a comprehensive medical analysis following this structure:
 
 """
 
@@ -384,18 +387,36 @@ async def analyze_symptoms_with_image(
             with open(temp_path, 'rb') as img_file:
                 image_base64 = base64.b64encode(img_file.read()).decode('utf-8')
             
-            prompt += """**Medical Image Analysis Required:**
-Analyze the provided medical image carefully and provide:
-1. Detailed description of visible findings
-2. Any abnormalities, lesions, or concerning features
-3. Possible conditions based on image analysis
+            prompt += """**MEDICAL IMAGE PROVIDED:**
+🔬 Analyze the clinical image using systematic visual examination:
+
+1. **VISUAL FINDINGS:**
+   - Describe color, texture, size, shape of any visible abnormality
+   - Note distribution pattern (localized, generalized, symmetric)
+   - Identify primary lesions (macule, papule, nodule, vesicle, etc.)
+   - Note secondary changes (crusting, scaling, ulceration)
+   - Assess severity indicators (inflammation, swelling, discharge)
+
+2. **CLINICAL CORRELATION:**
+   - Correlate visual findings with reported symptoms
+   - Consider anatomical location significance
+   - Note any alarming features requiring immediate attention
+
+3. **DIFFERENTIAL DIAGNOSIS FROM IMAGE:**
+   - Most likely conditions based on visual appearance
+   - Alternative diagnoses to consider
+   - What the image rules OUT
 
 """
             
-            # Try to use Groq's Llama Vision model
+            # Try to use Groq's Llama Vision model with detailed instructions
             try:
                 chat_completion = client.chat.completions.create(
                     messages=[
+                        {
+                            "role": "system",
+                            "content": "You are an expert medical diagnostician skilled in clinical image interpretation. Analyze medical images systematically like a trained physician would during physical examination. Be thorough, precise, and consider the full clinical context."
+                        },
                         {
                             "role": "user",
                             "content": [
@@ -409,9 +430,9 @@ Analyze the provided medical image carefully and provide:
                             ]
                         }
                     ],
-                    model="llama-3.2-11b-vision-preview",  # Use available vision model
-                    temperature=0.7,
-                    max_tokens=2048,
+                    model="llama-3.2-11b-vision-preview",
+                    temperature=0.3,  # Lower temperature for more consistent medical analysis
+                    max_tokens=3000,  # More tokens for detailed analysis
                 )
             except Exception as vision_error:
                 print(f"Vision model error: {str(vision_error)}")
@@ -440,21 +461,47 @@ Proceeding with text-based symptom analysis only.
             # Clean up temp file
             os.unlink(temp_path)
         else:
-            # Text-only analysis
-            prompt += """**Analysis Task:**
-Based on the symptoms provided, please provide:
-1. Most likely diagnoses (top 3)
-2. Severity assessment (Low/Medium/High/Emergency)
-3. Recommended actions
-4. Which medical specialists should be consulted
+            # Text-only analysis with detailed medical reasoning
+            prompt += """**CLINICAL ANALYSIS REQUIRED:**
 
-Provide a comprehensive but concise analysis."""
+1. **DIFFERENTIAL DIAGNOSIS:**
+   List 3 most likely conditions with:
+   - Condition name
+   - Probability/likelihood (High/Medium/Low)
+   - Key supporting features from patient's presentation
+   - Typical clinical course and prognosis
+
+2. **SEVERITY ASSESSMENT:**
+   - Overall severity level: Low/Medium/High/Emergency
+   - Urgency of medical attention needed
+   - Red flags or warning signs present
+   - Time-sensitive factors
+
+3. **CLINICAL REASONING:**
+   - Why these diagnoses fit the presentation
+   - What key features led to this conclusion
+   - What additional information would help narrow diagnosis
+
+4. **MANAGEMENT RECOMMENDATIONS:**
+   - Immediate self-care measures (if applicable)
+   - When to seek medical care (timeline)
+   - What to avoid or watch for
+   - Lifestyle modifications if relevant
+
+5. **SPECIALIST REFERRAL:**
+   - Primary specialist to consult (most important)
+   - Secondary specialists if needed
+   - Why this specialist is recommended
+
+**OUTPUT FORMAT:**
+Provide your analysis in clear, structured format. Be specific and evidence-based. Consider Indian healthcare context.
+"""
             
             chat_completion = client.chat.completions.create(
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are an expert medical AI assistant specializing in diagnostic analysis for rural healthcare in India."
+                        "content": "You are Dr. AI, an expert medical diagnostician with 20+ years of clinical experience. You specialize in primary care, emergency medicine, and differential diagnosis. Analyze cases systematically using evidence-based medicine principles. Consider the Indian healthcare context and resource constraints."
                     },
                     {
                         "role": "user",
@@ -462,94 +509,189 @@ Provide a comprehensive but concise analysis."""
                     }
                 ],
                 model="llama-3.3-70b-versatile",
-                temperature=0.7,
-                max_tokens=2048,
+                temperature=0.3,  # Lower for more consistent medical advice
+                max_tokens=3000  # More tokens for comprehensive analysis
             )
         
-        ai_response = chat_completion.choices[0].message.content
-        
         # Validate AI response
+        ai_response = chat_completion.choices[0].message.content
         if not ai_response:
             raise ValueError("No response from AI model")
         
         # Ensure type safety
         ai_response_str: str = str(ai_response)
         
-        # Parse AI response to extract structured data
+        # Parse AI response to extract structured data with improved extraction
         image_findings = ""
         diagnosis = ""
         recommendations = []
         suggested_specialists = []
         urgency_level = "medium"
         severity = "MEDIUM"
+        possible_conditions = []
         
-        # Extract image findings if present
-        if "image" in ai_response_str.lower() or "visible" in ai_response_str.lower():
-            lines = ai_response_str.split('\n')
-            for i, line in enumerate(lines):
-                if 'image' in line.lower() or 'visible' in line.lower() or 'finding' in line.lower():
-                    image_findings = ' '.join(lines[i:i+3])
-                    break
-        
-        # Extract severity/urgency
+        # Split response into sections for better parsing
+        sections = ai_response_str.split('\n\n')
         response_lower = ai_response_str.lower()
-        if any(word in response_lower for word in ['emergency', 'urgent', 'immediate', 'critical', 'severe']):
+        
+        # Extract image findings (improved detection)
+        for section in sections:
+            section_lower = section.lower()
+            if any(keyword in section_lower for keyword in ['visual finding', 'image analysis', 'visible', 'observed in image', 'clinical image']):
+                # Extract first meaningful paragraph about image
+                lines = [line.strip() for line in section.split('\n') if line.strip() and not line.strip().startswith(('*', '-', '#'))]
+                if lines:
+                    image_findings = ' '.join(lines[:3])  # First 3 relevant lines
+                break
+        
+        # Extract severity/urgency with more precise detection
+        if any(word in response_lower for word in ['emergency', 'immediate medical attention', 'urgent care', 'critical', 'life-threatening']):
             urgency_level = "high"
             severity = "HIGH"
-        elif any(word in response_lower for word in ['moderate', 'concerning', 'medium']):
+        elif any(word in response_lower for word in ['moderate', 'medical attention soon', 'concerning', 'should see doctor', 'medium severity']):
             urgency_level = "medium"
             severity = "MEDIUM"
         else:
             urgency_level = "low"
             severity = "LOW"
         
-        # Extract diagnosis
-        if 'diagnosis' in response_lower or 'condition' in response_lower:
-            diagnosis_start = ai_response_str.lower().find('diagnosis')
-            if diagnosis_start == -1:
-                diagnosis_start = ai_response_str.lower().find('condition')
-            if diagnosis_start != -1:
-                diagnosis = ai_response_str[diagnosis_start:diagnosis_start+300].split('\n')[0]
-        else:
-            diagnosis = ai_response_str[:200]  # First 200 chars as diagnosis
+        # Extract diagnosis with better parsing
+        diagnosis = ""
+        for section in sections:
+            section_lower = section.lower()
+            if any(keyword in section_lower for keyword in ['differential diagnosis', 'likely condition', 'diagnosis:', 'clinical impression']):
+                # Get the main diagnosis text
+                lines = [line.strip() for line in section.split('\n') if line.strip()]
+                diagnosis = ' '.join(lines[:5])  # First 5 lines of diagnosis section
+                break
         
-        # Extract recommendations
-        rec_keywords = ['recommend', 'should', 'advised', 'suggestion']
-        lines = ai_response_str.split('\n')
-        for line in lines:
-            if any(keyword in line.lower() for keyword in rec_keywords):
-                recommendations.append(line.strip('- •*#'))
+        if not diagnosis:
+            # Fallback: take first meaningful paragraph
+            for section in sections:
+                if len(section) > 50:
+                    diagnosis = section[:300]
+                    break
+        
+        # Extract recommendations with improved parsing
+        recommendations = []
+        for section in sections:
+            section_lower = section.lower()
+            if any(keyword in section_lower for keyword in ['recommendation', 'management', 'advice', 'should do', 'action']):
+                lines = section.split('\n')
+                for line in lines:
+                    line_clean = line.strip('- •*#1234567890. ').strip()
+                    if line_clean and len(line_clean) > 15:  # Meaningful recommendation
+                        if any(action in line_clean.lower() for action in ['consult', 'see', 'visit', 'avoid', 'take', 'apply', 'monitor', 'seek', 'rest', 'drink']):
+                            recommendations.append(line_clean)
+                            if len(recommendations) >= 5:
+                                break
+                break
         
         if not recommendations:
-            recommendations = [
-                "Consult with a healthcare professional for proper diagnosis",
-                "Monitor symptoms and note any changes",
-                "Maintain proper hygiene and rest"
-            ]
+            # Default recommendations based on severity
+            if severity == "HIGH":
+                recommendations = [
+                    "Seek immediate medical attention at the nearest healthcare facility",
+                    "Do not delay - this requires urgent evaluation",
+                    "Call emergency services if symptoms worsen suddenly"
+                ]
+            elif severity == "MEDIUM":
+                recommendations = [
+                    "Consult with a healthcare professional within 24-48 hours",
+                    "Monitor symptoms closely and note any changes",
+                    "Avoid self-medication without medical advice"
+                ]
+            else:
+                recommendations = [
+                    "Monitor symptoms - consult doctor if they persist or worsen",
+                    "Maintain proper hygiene and rest",
+                    "Stay hydrated and follow basic self-care measures"
+                ]
         
-        # Extract specialists
-        specialist_keywords = ['cardiol', 'dermato', 'pediatr', 'orthoped', 'psychiat', 
-                             'neurolog', 'gynecolog', 'urolog', 'general physician', 'ent']
-        for keyword in specialist_keywords:
-            if keyword in response_lower:
-                specialist_name = keyword.title() + ("ogist" if not keyword.endswith('ian') else "")
-                if specialist_name not in suggested_specialists:
-                    suggested_specialists.append(specialist_name)
+        # Extract specialists with improved detection
+        specialist_mapping = {
+            'cardiol': 'Cardiologist',
+            'dermato': 'Dermatologist',
+            'pediatr': 'Pediatrician',
+            'orthoped': 'Orthopedic Surgeon',
+            'psychiat': 'Psychiatrist',
+            'neurolog': 'Neurologist',
+            'gynecolog': 'Gynecologist',
+            'urolog': 'Urologist',
+            'general physician': 'General Physician',
+            'ent': 'ENT Specialist',
+            'gastro': 'Gastroenterologist',
+            'pulmonologist': 'Pulmonologist',
+            'ophthalmologist': 'Ophthalmologist',
+            'endocrinologist': 'Endocrinologist',
+            'rheumatologist': 'Rheumatologist',
+            'emergency': 'Emergency Medicine',
+            'primary care': 'General Physician'
+        }
         
+        suggested_specialists = []
+        for keyword, specialist_name in specialist_mapping.items():
+            if keyword in response_lower and specialist_name not in suggested_specialists:
+                suggested_specialists.append(specialist_name)
+        
+        # If no specialists found, infer from severity
         if not suggested_specialists:
-            suggested_specialists = ["General Physician"]
+            if severity == "HIGH":
+                suggested_specialists = ["Emergency Medicine", "General Physician"]
+            else:
+                suggested_specialists = ["General Physician"]
         
-        # Build possible conditions list
+        # Build possible conditions list with better extraction
         possible_conditions = []
-        if diagnosis:
-            # Extract conditions from diagnosis
-            condition_lines = [line.strip() for line in diagnosis.split('\n') if line.strip()]
-            for i, line in enumerate(condition_lines[:3]):  # Max 3 conditions
-                possible_conditions.append({
-                    "name": line.split(':')[0].strip() if ':' in line else line[:50],
-                    "probability": 80 - (i * 20),  # Decreasing probability
-                    "description": line
-                })
+        conditions_found = False
+        
+        for section in sections:
+            section_lower = section.lower()
+            if any(keyword in section_lower for keyword in ['differential diagnosis', 'possible condition', 'likely diagnos']):
+                lines = [line.strip() for line in section.split('\n') if line.strip()]
+                for line in lines:
+                    # Look for numbered or bulleted lists
+                    if any(char in line[:5] for char in ['1', '2', '3', '•', '-', '*']):
+                        condition_text = line.strip('1234567890.-•* ').strip()
+                        if len(condition_text) > 10:  # Meaningful condition
+                            # Try to extract probability if mentioned
+                            probability = 70  # Default
+                            if 'high' in line.lower() or 'likely' in line.lower():
+                                probability = 80
+                            elif 'possible' in line.lower() or 'consider' in line.lower():
+                                probability = 60
+                            elif 'unlikely' in line.lower() or 'less likely' in line.lower():
+                                probability = 40
+                            
+                            possible_conditions.append({
+                                "name": condition_text.split(':')[0].strip() if ':' in condition_text else condition_text[:60],
+                                "probability": probability,
+                                "description": condition_text
+                            })
+                            conditions_found = True
+                            if len(possible_conditions) >= 4:  # Max 4 conditions
+                                break
+                if conditions_found:
+                    break
+        
+        # Fallback: extract from diagnosis text
+        if not possible_conditions and diagnosis:
+            condition_lines = [line.strip() for line in diagnosis.split('.') if line.strip()]
+            for i, line in enumerate(condition_lines[:3]):
+                if len(line) > 15:
+                    possible_conditions.append({
+                        "name": line[:50],
+                        "probability": 75 - (i * 15),
+                        "description": line
+                    })
+        
+        # Ensure at least one condition
+        if not possible_conditions:
+            possible_conditions.append({
+                "name": "Requires professional evaluation",
+                "probability": 50,
+                "description": "Symptoms require in-person medical assessment for accurate diagnosis"
+            })
         
         # Build symptoms list from input
         symptoms_obj_list = []
