@@ -51,7 +51,7 @@ export default function LoginScreen() {
             <View style={styles.logoContainer}>
               <Ionicons name="medical" size={60} color={Colors.primary} />
             </View>
-            <Text style={styles.title}>TeleMed AI</Text>
+            <Text style={styles.title}>ZYCARE</Text>
             <Text style={styles.subtitle}>
               Your AI-powered health companion
             </Text>
