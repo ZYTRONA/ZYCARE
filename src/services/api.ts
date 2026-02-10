@@ -1,8 +1,8 @@
 import { Doctor, Appointment, AISymptomAnalysis, User, Symptom } from '../types';
 
 // Real Backend API URL
-const API_BASE_URL = 'http://192.168.137.193:5000/api';
-const API_TIMEOUT = 5000; // 5 seconds timeout
+const API_BASE_URL = 'http://10.56.198.1:5000/api';
+const API_TIMEOUT = 15000; // 15 seconds timeout
 
 // Check if API is reachable
 let apiIsReachable = true;
@@ -238,7 +238,11 @@ export const appointmentsAPI = {
   },
 
   async createAppointment(data: {
+    patientId: string;
+    patientName: string;
     doctorId: string;
+    doctorName: string;
+    doctorSpecialty: string;
     date: string;
     time: string;
     type: 'video' | 'audio' | 'chat';

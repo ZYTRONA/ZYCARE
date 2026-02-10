@@ -18,6 +18,7 @@ import { RootStackParamList, Appointment } from '../../types';
 import { useAuthStore, useLanguageStore } from '../../store';
 import { appointmentsAPI } from '../../services/api';
 import { t, LanguageCode } from '../../languages';
+import { socketService } from '../../services/socket';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type TabType = 'upcoming' | 'completed' | 'cancelled';
@@ -54,6 +55,22 @@ export default function AppointmentsScreen() {
     };
 
     fetchAppointments();
+    
+    // Connect to Socket.io
+    if (user?.id) {
+      socketService.connect(user.id, user.role === 'doctor' ? 'doctor' : 'patient');
+      
+      // Listen for new appointment confirmations
+      socketService.onAppointmentConfirmed((appointment: Appointment) => {
+        console.log('🔔 Appointment confirmed via Socket.io:', appointment);
+        setAppointments((prev) => [appointment, ...prev]);
+      });
+    }
+    
+    // Cleanup
+    return () => {
+      socketService.offAppointmentConfirmed();
+    };
   }, [user?.id]);
 
   const getFilteredAppointments = () => {

@@ -119,7 +119,7 @@ export default function DoctorsScreen() {
       </View>
       <TouchableOpacity
         style={styles.bookButton}
-        onPress={() => navigation.navigate('BookAppointment', { doctorId: item.id })}
+        onPress={() => navigation.navigate('BookAppointment', { doctor: item })}
       >
         <Text style={styles.bookButtonText}>Book</Text>
       </TouchableOpacity>

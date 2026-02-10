@@ -40,15 +40,93 @@ app.use('/api/users', userRoutes);
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/appointments', appointmentRoutes);
 
+// Pass Socket.io instance to routes that need it
+if (appointmentRoutes.setSocketIO) {
+  appointmentRoutes.setSocketIO(io);
+}
+
 // Socket.io Connection
 io.on('connection', (socket) => {
   console.log('🔌 User connected:', socket.id);
 
-  socket.on('join_doctor_room', () => {
+  // Doctor joins their room
+  socket.on('join_doctor_room', (doctorId) => {
     socket.join('doctors');
-    console.log('👨‍⚕️ Doctor joined room');
+    socket.join(`doctor_${doctorId}`);
+    console.log(`👨‍⚕️ Doctor ${doctorId} joined room`);
   });
 
+  // Patient joins waiting room
+  socket.on('join_patient_room', (patientId) => {
+    socket.join('patients');
+    socket.join(`patient_${patientId}`);
+    console.log(`👤 Patient ${patientId} joined room`);
+  });
+
+  // Patient joins queue
+  socket.on('patient_joined_queue', (data) => {
+    io.to('doctors').emit('queue_updated', data);
+    console.log('✅ Patient joined queue:', data.patientName);
+  });
+
+  // Doctor status change (available/on break)
+  socket.on('doctor_status_changed', (data) => {
+    io.to('patients').emit('doctor_availability_changed', data);
+    io.to('doctors').emit('doctor_status_update', data);
+    console.log(`🔔 Doctor ${data.doctorId} is now ${data.status}`);
+  });
+
+  // Consultation started
+  socket.on('consultation_started', (data) => {
+    io.to(`patient_${data.patientId}`).emit('consultation_started', data);
+    io.to('doctors').emit('queue_updated', data);
+    console.log(`📹 Consultation started: Doctor ${data.doctorId} with Patient ${data.patientId}`);
+  });
+
+  // Consultation ended
+  socket.on('consultation_ended', (data) => {
+    io.to(`patient_${data.patientId}`).emit('consultation_ended', data);
+    io.to('doctors').emit('queue_updated', data);
+    console.log(`✅ Consultation ended: ${data.patientId}`);
+  });
+
+  // Queue position updated
+  socket.on('update_queue_position', (data) => {
+    data.patients.forEach(patient => {
+      io.to(`patient_${patient.id}`).emit('queue_position_updated', {
+        position: patient.position,
+        estimatedTime: patient.estimatedTime,
+        tokenNumber: patient.tokenNumber
+      });
+    });
+    io.to('doctors').emit('queue_updated', data);
+    console.log('📊 Queue positions updated');
+  });
+
+  // Prescription created
+  socket.on('prescription_created', (data) => {
+    io.to(`patient_${data.patientId}`).emit('prescription_received', data);
+    console.log(`💊 Prescription created for patient ${data.patientId}`);
+  });
+
+  // Appointment created
+  socket.on('appointment_created', (data) => {
+    io.to(`doctor_${data.doctorId}`).emit('new_appointment', data);
+    io.to(`patient_${data.patientId}`).emit('appointment_confirmed', data);
+    console.log(`📅 Appointment created: ${data.appointmentId}`);
+  });
+
+  // Real-time notification
+  socket.on('send_notification', (data) => {
+    if (data.recipientType === 'doctor') {
+      io.to(`doctor_${data.recipientId}`).emit('notification', data);
+    } else {
+      io.to(`patient_${data.recipientId}`).emit('notification', data);
+    }
+    console.log(`🔔 Notification sent to ${data.recipientType} ${data.recipientId}`);
+  });
+
+  // Legacy support
   socket.on('new_ticket', (data) => {
     io.to('doctors').emit('new_patient', data);
     console.log('🎫 New ticket broadcasted:', data);
@@ -68,7 +146,7 @@ app.get('/', (req, res) => {
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 ZYCARE Backend running on port ${PORT}`);
-  console.log(`📱 Mobile can connect at: http://192.168.137.14:${PORT}`);
+  console.log(`📱 Mobile can connect at: http://10.56.198.1:${PORT}`);
 });
 
 module.exports = { io };

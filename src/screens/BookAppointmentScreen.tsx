@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   TextInput,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,7 +14,10 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { Colors, Typography, Spacing, Shadows } from '../constants/theme';
-import { RootStackParamList } from '../types';
+import { RootStackParamList, Doctor } from '../types';
+import { useAuthStore } from '../store';
+import { appointmentsAPI } from '../services/api';
+import { socketService } from '../services/socket';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type RouteProps = RouteProp<RootStackParamList, 'BookAppointment'>;
@@ -40,6 +44,10 @@ type ConsultationType = 'video' | 'audio' | 'chat';
 export default function BookAppointmentScreen() {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<RouteProps>();
+  const user = useAuthStore((state: any) => state.user);
+
+  // Get doctor from route params
+  const doctor = route.params?.doctor as Doctor | undefined;
 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -47,14 +55,84 @@ export default function BookAppointmentScreen() {
   const [symptoms, setSymptoms] = useState('');
   const [isBooking, setIsBooking] = useState(false);
 
-  const handleBookAppointment = () => {
+  const handleBookAppointment = async () => {
+    if (!selectedDate || !selectedTime) {
+      Alert.alert('Missing Information', 'Please select both date and time');
+      return;
+    }
+
+    if (!user?.id) {
+      Alert.alert('Error', 'Please login to book an appointment');
+      return;
+    }
+
+    if (!doctor?.id) {
+      Alert.alert('Error', 'Doctor information is missing');
+      return;
+    }
+
     setIsBooking(true);
-    // Simulate API call
-    setTimeout(() => {
+
+    try {
+      // Format date as YYYY-MM-DD
+      const year = 2026;
+      const month = 'Feb';
+      const formattedDate = `${year}-02-${selectedDate.padStart(2, '0')}`;
+
+      console.log('📅 Booking appointment:', {
+        patientId: user.id,
+        patientName: user.name,
+        doctorId: doctor.id,
+        doctorName: doctor.name,
+        doctorSpecialty: doctor.specialty,
+        date: formattedDate,
+        time: selectedTime,
+        type: consultationType,
+        symptoms,
+      });
+
+      const appointment = await appointmentsAPI.createAppointment({
+        patientId: user.id,
+        patientName: user.name,
+        doctorId: doctor.id,
+        doctorName: doctor.name,
+        doctorSpecialty: doctor.specialty,
+        date: formattedDate,
+        time: selectedTime,
+        type: consultationType,
+        symptoms,
+      });
+
+      console.log('✅ Appointment created:', appointment);
+
+      // Connect to socket if not already connected
+      if (!socketService.isConnected()) {
+        socketService.connect(user.id, 'patient');
+      }
+
+      Alert.alert(
+        'Success! 🎉',
+        `Your appointment has been booked for ${formattedDate} at ${selectedTime}`,
+        [
+          {
+            text: 'View Appointments',
+            onPress: () => navigation.navigate('MainTabs', { screen: 'Appointments' }),
+          },
+          {
+            text: 'OK',
+            onPress: () => navigation.goBack(),
+          },
+        ]
+      );
+    } catch (error: any) {
+      console.error('❌ Error booking appointment:', error);
+      Alert.alert(
+        'Booking Failed',
+        error?.message || 'Unable to book appointment. Please try again.'
+      );
+    } finally {
       setIsBooking(false);
-      // Navigate to success or appointments screen
-      navigation.navigate('MainTabs');
-    }, 2000);
+    }
   };
 
   const getConsultationFee = () => {
@@ -91,8 +169,8 @@ export default function BookAppointmentScreen() {
             <Ionicons name="person" size={32} color={Colors.primary} />
           </View>
           <View style={styles.doctorInfo}>
-            <Text style={styles.doctorName}>Dr. Sarah Johnson</Text>
-            <Text style={styles.doctorSpecialty}>General Physician</Text>
+            <Text style={styles.doctorName}>{doctor?.name || 'Doctor'}</Text>
+            <Text style={styles.doctorSpecialty}>{doctor?.specialty || 'Specialist'}</Text>
           </View>
         </View>
 

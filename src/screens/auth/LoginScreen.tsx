@@ -18,7 +18,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Colors, Typography, Spacing, Shadows } from '../../constants/theme';
 import { RootStackParamList } from '../../types';
 import { useAuthStore, useLanguageStore } from '../../store';
-import { generateOTP, sendOTPEmail, verifyOTP, resendOTP } from '../../utils/mail';
+import { authAPI } from '../../services/api';
 import { t, LanguageCode, languages } from '../../languages';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -73,13 +73,10 @@ export default function LoginScreen() {
     
     setIsLoading(true);
     try {
-      console.log('Generating and sending OTP to:', email);
+      console.log('Sending OTP to:', email);
       
-      // Generate OTP
-      const otp = generateOTP();
-      
-      // Send OTP email
-      const response = await sendOTPEmail(email, name, otp);
+      // Send OTP via backend API
+      const response = await authAPI.login(email, name, role);
       console.log('OTP Response:', response);
       
       if (response.success) {
@@ -113,9 +110,9 @@ export default function LoginScreen() {
     
     setIsLoading(true);
     try {
-      console.log('Verifying OTP:', otp, 'for email:', email);
-      const response = await verifyOTP(email, otp);
-      console.log('Verify Response:', response);
+      console.log('🔐 Verifying OTP:', otp, 'for email:', email);
+      const response = await authAPI.verifyOTP(email, otp);
+      console.log('✅ Verify Response:', response);
       
       if (response.success && response.user) {
         // Merge the phone number from login form with user data
@@ -131,8 +128,11 @@ export default function LoginScreen() {
         Alert.alert(t(language as LanguageCode, 'common.error'), response.message || t(language as LanguageCode, 'auth.invalidOTP', 'Invalid OTP'));
       }
     } catch (error: any) {
-      console.error('OTP Verify Error:', error);
-      Alert.alert(t(language as LanguageCode, 'common.error'), error.message || t(language as LanguageCode, 'auth.invalidOTP', 'Invalid OTP'));
+      console.error('❌ OTP Verify Error:', error);
+      Alert.alert(
+        t(language as LanguageCode, 'common.error'), 
+        error.message || t(language as LanguageCode, 'auth.invalidOTP', 'Invalid OTP. Please check and try again.')
+      );
     } finally {
       setIsLoading(false);
     }
@@ -337,17 +337,26 @@ export default function LoginScreen() {
                     if (isLoading) return;
                     setIsLoading(true);
                     try {
-                      const otp = generateOTP();
-                      const response = await sendOTPEmail(email, name, otp);
+                      console.log('🔄 Resending OTP to:', email);
+                      const response = await authAPI.resendOTP(email);
                       if (response.success) {
                         setOtp('');
-                        Alert.alert(t(language as LanguageCode, 'auth.otpResent', 'OTP Resent'), t(language as LanguageCode, 'auth.otpResendSuccess', `New OTP sent to ${email}`));
+                        Alert.alert(
+                          t(language as LanguageCode, 'auth.otpResent', 'OTP Resent'), 
+                          t(language as LanguageCode, 'auth.otpResendSuccess', `New OTP sent to ${email}`)
+                        );
                       } else {
-                        Alert.alert(t(language as LanguageCode, 'common.error'), response.message || t(language as LanguageCode, 'auth.otpResendFailed', 'Failed to resend OTP'));
+                        Alert.alert(
+                          t(language as LanguageCode, 'common.error'), 
+                          response.message || t(language as LanguageCode, 'auth.otpResendFailed', 'Failed to resend OTP')
+                        );
                       }
                     } catch (error) {
                       console.error('Resend OTP Error:', error);
-                      Alert.alert(t(language as LanguageCode, 'common.error'), t(language as LanguageCode, 'auth.otpResendError', 'Failed to resend OTP'));
+                      Alert.alert(
+                        t(language as LanguageCode, 'common.error'), 
+                        t(language as LanguageCode, 'auth.otpResendError', 'Failed to resend OTP. Please check your internet connection.')
+                      );
                     } finally {
                       setIsLoading(false);
                     }

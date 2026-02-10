@@ -7,7 +7,7 @@
 import axios from 'axios';
 
 // Backend API URL - Use the correct machine IP
-const API_URL = 'http://192.168.137.193:5000/api/auth';
+const API_URL = 'http://10.56.198.1:5000/api/auth';
 
 // In-memory OTP storage (in production, use secure storage)
 const otpStore = new Map();
@@ -65,13 +65,13 @@ export const sendOTPEmail = async (email, name, otp) => {
     });
 
     console.log(`📧 Calling backend to send OTP to ${email}...`);
-    console.log(`🔗 API URL: ${API_URL}/send-otp`);
+    console.log(`🔗 API URL: ${API_URL}/login`);
 
     // Send OTP via backend API (nodemailer)
-    const response = await axios.post(`${API_URL}/send-otp`, {
+    const response = await axios.post(`${API_URL}/login`, {
       email,
       name,
-      otp
+      role: 'patient' // Default role
     }, {
       timeout: 15000 // 15 second timeout
     });
@@ -103,76 +103,53 @@ export const sendOTPEmail = async (email, name, otp) => {
 };
 
 /**
- * Verify OTP code
+ * Verify OTP code via backend API
  * @param {string} email - User email
  * @param {string} otp - OTP to verify
  * @returns {Promise<OTPVerifyResponse>} - Verification result
  */
 export const verifyOTP = async (email, otp) => {
   try {
-    const storedData = otpStore.get(email);
+    console.log(`🔐 Verifying OTP for ${email}...`);
+    console.log(`🔗 API URL: ${API_URL}/verify-otp`);
 
-    if (!storedData) {
-      return {
-        success: false,
-        verified: false,
-        message: 'OTP expired or not found. Please request a new OTP.',
-      };
-    }
+    // Verify OTP via backend API
+    const response = await axios.post(`${API_URL}/verify-otp`, {
+      email,
+      otp
+    }, {
+      timeout: 15000
+    });
 
-    // Check if OTP has expired
-    if (Date.now() > storedData.expiresAt) {
+    console.log('✅ OTP verification response:', response.data);
+
+    if (response.data.success) {
+      // Clear local storage on successful verification
       otpStore.delete(email);
       return {
-        success: false,
-        verified: false,
-        message: 'OTP has expired. Please request a new one.',
+        success: true,
+        verified: true,
+        message: 'OTP verified successfully',
+        user: response.data.user
       };
     }
 
-    // Check max attempts
-    if (storedData.attempts >= storedData.maxAttempts) {
-      otpStore.delete(email);
-      return {
-        success: false,
-        verified: false,
-        message: 'Too many failed attempts. Please request a new OTP.',
-      };
-    }
-
-    // Verify OTP
-    if (otp !== storedData.otp) {
-      storedData.attempts += 1;
-      const remaining = storedData.maxAttempts - storedData.attempts;
-      return {
-        success: false,
-        verified: false,
-        message: `Invalid OTP. ${remaining} attempts remaining.`,
-      };
-    }
-
-    // OTP is valid - clear it
-    otpStore.delete(email);
-
-    console.log(`✅ OTP verified successfully for ${email}`);
-
-    return {
-      success: true,
-      verified: true,
-      message: 'OTP verified successfully',
-      user: {
-        id: 'user_' + Date.now(),
-        email,
-        name: storedData.name || 'User', // Use stored name
-        role: 'patient',
-      },
-    };
-  } catch (error) {
-    console.error('❌ OTP verification error:', error);
     return {
       success: false,
       verified: false,
-      message: 'Verification failed',
+      message: response.data.message || 'Invalid OTP',
+    };
+  } catch (error) {
+    console.error('❌ OTP verification error:', error.message);
+    console.error('📋 Error details:', {
+      code: error.code,
+      status: error.response?.status,
+      data: error.response?.data
+    });
+    return {
+      success: false,
+      verified: false,
+      message: error.response?.data?.message || 'Verification failed. Please try again.',
     };
   }
 };

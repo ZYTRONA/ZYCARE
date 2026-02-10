@@ -13,7 +13,7 @@ const getAPIURL = () => {
   }
   
   // Priority 2: Default to correct machine IP where backend is running
-  return 'http://192.168.137.193:5000';
+  return 'http://10.56.198.1:5000';
 };
 
 const API_URL = getAPIURL();

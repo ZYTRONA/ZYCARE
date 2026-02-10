@@ -1,23 +1,24 @@
-nohup: ignoring input
-INFO:     Started server process [345258]
+INFO:     Started server process [212563]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-INFO:     127.0.0.1:45792 - "GET /health HTTP/1.1" 200 OK
+INFO:     10.56.198.1:43906 - "GET /health HTTP/1.1" 200 OK
+INFO:     10.56.198.1:52274 - "POST /symptoms/analyze HTTP/1.1" 404 Not Found
+INFO:     10.56.198.1:38132 - "POST /analyze HTTP/1.1" 200 OK
+INFO:     10.56.198.1:57450 - "POST /chat HTTP/1.1" 200 OK
 Received symptoms: Anxiety
 Parsed symptoms list: ['Anxiety']
 Has file: False
-INFO:     10.56.198.79:51008 - "POST /analyze-with-image HTTP/1.1" 200 OK
-Received symptoms: Dizziness,Sore Throat
-Parsed symptoms list: ['Dizziness', 'Sore Throat']
+INFO:     10.56.198.79:54592 - "POST /analyze-with-image HTTP/1.1" 200 OK
+INFO:     10.56.198.79:57348 - "POST /chat HTTP/1.1" 200 OK
+INFO:     10.56.198.79:51036 - "POST /chat HTTP/1.1" 200 OK
+INFO:     10.56.198.79:39210 - "POST /chat HTTP/1.1" 200 OK
+INFO:     10.56.198.79:50690 - "POST /chat HTTP/1.1" 200 OK
+INFO:     10.56.198.79:43226 - "POST /chat HTTP/1.1" 200 OK
+INFO:     10.56.198.1:37780 - "GET /health HTTP/1.1" 200 OK
+Received symptoms: Shortness of Breath
+Parsed symptoms list: ['Shortness of Breath']
 Has file: False
-INFO:     10.56.198.79:48466 - "POST /analyze-with-image HTTP/1.1" 200 OK
-Received symptoms: Headache
-Parsed symptoms list: ['Headache']
-Has file: False
-INFO:     10.56.198.79:36568 - "POST /analyze-with-image HTTP/1.1" 200 OK
-Received symptoms: Skin Rash
-Parsed symptoms list: ['Skin Rash']
-Has file: True
-Vision model error: Error code: 400 - {'error': {'message': 'The model `llama-3.2-11b-vision-preview` has been decommissioned and is no longer supported. Please refer to https://console.groq.com/docs/deprecations for a recommendation on which model to use instead.', 'type': 'invalid_request_error', 'code': 'model_decommissioned'}}
-INFO:     10.56.198.79:47218 - "POST /analyze-with-image HTTP/1.1" 200 OK
+INFO:     10.56.198.79:33082 - "POST /analyze-with-image HTTP/1.1" 200 OK
+INFO:     10.56.198.169:38428 - "POST /chat HTTP/1.1" 200 OK
+INFO:     10.56.198.1:54624 - "GET /health HTTP/1.1" 200 OK

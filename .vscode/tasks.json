@@ -1,0 +1,12 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Start ZYCARE Backend",
+			"type": "shell",
+			"command": "cd /run/media/aadhiasarana/Storage1/ZYCARE/backend && npm start",
+			"isBackground": true,
+			"problemMatcher": []
+		}
+	]
+}

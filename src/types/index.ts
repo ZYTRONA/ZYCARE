@@ -113,7 +113,7 @@ export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
   DoctorProfile: { doctorId: string };
-  BookAppointment: { doctorId: string };
+  BookAppointment: { doctor?: Doctor };
   Consultation: { appointmentId: string };
   SymptomChecker: undefined;
   PersonalInformation: undefined;
@@ -124,8 +124,32 @@ export type RootStackParamList = {
   About: undefined;
   Chat: undefined;
   ChatScreen: { appointmentId: string; doctorName: string };
-  VideoCall: { roomId?: string; doctorName?: string };
+  VideoCall: { 
+    roomId?: string; 
+    doctorName?: string; 
+    patientId?: string;
+    patientName?: string;
+    patientData?: {
+      age?: number;
+      gender?: string;
+      symptoms?: string;
+    };
+  };
   LanguageSelection: undefined;
+  // Doctor Dashboard Routes
+  DoctorDashboard: undefined;
+  DoctorQueue: undefined;
+  DoctorConsultation: { patientId?: string };
+  DoctorPrescription: { 
+    patientId?: string; 
+    patientName?: string; 
+    patientData?: {
+      age?: number;
+      gender?: string;
+      symptoms?: string;
+    };
+  };
+  DoctorSchedule: undefined;
 };
 
 export type MainTabParamList = {

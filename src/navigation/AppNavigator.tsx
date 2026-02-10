@@ -25,6 +25,7 @@ import BookAppointmentScreen from '../screens/BookAppointmentScreen';
 import SymptomCheckerScreen from '../screens/SymptomCheckerScreen';
 import ConsultationScreen from '../screens/ConsultationScreen';
 import ChatScreen from '../screens/ChatScreen';
+import AIChatNew from '../screens/main/AIChatNew';
 
 // Settings Screens
 import PersonalInformationScreen from '../screens/settings/PersonalInformationScreen';
@@ -35,8 +36,14 @@ import HelpSupportScreen from '../screens/settings/HelpSupportScreen';
 import AboutScreen from '../screens/settings/AboutScreen';
 import LanguageSelectionScreen from '../screens/LanguageSelectionScreen';
 
-// JS Screens for video call
-import VideoCall from '../screens/main/VideoCall';
+// Video Call Screen
+import VideoCallScreen from '../screens/main/VideoCallScreen';
+
+// Doctor Screens
+import DoctorDashboardNew from '../screens/main/DoctorDashboardNew';
+import DoctorQueueScreen from '../screens/main/DoctorQueueScreen';
+import DoctorPrescriptionScreen from '../screens/main/DoctorPrescriptionScreen';
+import DoctorScheduleScreen from '../screens/main/DoctorScheduleScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -92,6 +99,7 @@ function MainTabs() {
 export default function AppNavigator() {
   const isAuthenticated = useAuthStore((state: any) => state.isAuthenticated);
   const user = useAuthStore((state: any) => state.user);
+  const isDoctor = user?.role === 'doctor';
 
   return (
     <NavigationContainer>
@@ -102,8 +110,34 @@ export default function AppNavigator() {
             headerShown: false,
             contentStyle: { backgroundColor: Colors.background },
           }}
+          initialRouteName={isDoctor ? 'DoctorDashboard' : 'MainTabs'}
         >
-          <Stack.Screen name="MainTabs" component={MainTabs} />
+          {isDoctor ? (
+            // Doctor Routes
+            <>
+              <Stack.Screen name="DoctorDashboard" component={DoctorDashboardNew} />
+              <Stack.Screen name="DoctorQueue" component={DoctorQueueScreen} />
+              <Stack.Screen name="DoctorPrescription" component={DoctorPrescriptionScreen} />
+              <Stack.Screen name="DoctorSchedule" component={DoctorScheduleScreen} />
+              <Stack.Screen
+                name="VideoCall"
+                component={VideoCallScreen}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="Profile"
+                component={ProfileScreen}
+                options={{ headerShown: false }}
+              />
+            </>
+          ) : (
+            // Patient Routes
+            <>
+              <Stack.Screen name="MainTabs" component={MainTabs} />
+            </>
+          )}
+          
+          {/* Common Routes */}
           <Stack.Screen
             name="DoctorProfile"
             component={DoctorProfileScreen}
@@ -161,12 +195,7 @@ export default function AppNavigator() {
           />
           <Stack.Screen
             name="Chat"
-            component={ChatScreen}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="VideoCall"
-            component={VideoCall}
+            component={AIChatNew}
             options={{ headerShown: false }}
           />
           <Stack.Screen

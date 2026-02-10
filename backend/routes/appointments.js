@@ -3,6 +3,12 @@ const router = express.Router();
 const Appointment = require('../models/Appointment');
 const Doctor = require('../models/Doctor');
 
+// Get io instance from server
+let io;
+const setSocketIO = (socketIO) => {
+  io = socketIO;
+};
+
 // GET /api/appointments/upcoming/:userId - Get upcoming appointments for user
 router.get('/upcoming/:userId', async (req, res) => {
   try {
@@ -93,22 +99,37 @@ router.post('/', async (req, res) => {
     
     console.log('📡 POST /api/appointments - Booking appointment:', { patientId, doctorId, date, time });
     
-    if (!patientId || !doctorId || !date || !time) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    if (!patientId || !date || !time) {
+      return res.status(400).json({ error: 'Missing required fields: patientId, date, time' });
+    }
+
+    if (!doctorId && !doctorName) {
+      return res.status(400).json({ error: 'Either doctorId or doctorName must be provided' });
     }
     
-    // Get doctor details
-    const doctor = await Doctor.findById(doctorId).lean();
-    if (!doctor) {
-      return res.status(404).json({ error: 'Doctor not found' });
+    // Get doctor details if doctorId is provided and valid
+    let doctor = null;
+    let finalDoctorName = doctorName;
+    let finalDoctorSpecialty = doctorSpecialty;
+    
+    if (doctorId) {
+      try {
+        doctor = await Doctor.findById(doctorId).lean();
+        if (doctor) {
+          finalDoctorName = doctorName || doctor.name;
+          finalDoctorSpecialty = doctorSpecialty || doctor.specialty;
+        }
+      } catch (err) {
+        console.log('⚠️ Doctor not found in database, using provided data');
+      }
     }
     
     const appointment = new Appointment({
       patientId,
       patientName,
-      doctorId,
-      doctorName: doctorName || doctor.name,
-      doctorSpecialty: doctorSpecialty || doctor.specialty,
+      doctorId: doctorId || 'unknown',
+      doctorName: finalDoctorName || 'Doctor',
+      doctorSpecialty: finalDoctorSpecialty || 'General Physician',
       date,
       time,
       type: type || 'video',
@@ -123,6 +144,14 @@ router.post('/', async (req, res) => {
       ...appointment.toObject(),
       id: appointment._id.toString(),
     };
+    
+    // Emit Socket.io event for real-time update
+    if (io) {
+      io.to(`doctor_${doctorId}`).emit('new_appointment', normalizedAppointment);
+      io.to(`patient_${patientId}`).emit('appointment_confirmed', normalizedAppointment);
+      io.to('doctors').emit('appointment_created', normalizedAppointment);
+      console.log('🔔 Socket.io: Appointment broadcast sent');
+    }
     
     console.log('✅ Appointment booked successfully:', appointment._id);
     res.status(201).json({ success: true, appointment: normalizedAppointment, message: 'Appointment booked successfully' });
@@ -195,3 +224,4 @@ router.patch('/:appointmentId', async (req, res) => {
 });
 
 module.exports = router;
+module.exports.setSocketIO = setSocketIO;

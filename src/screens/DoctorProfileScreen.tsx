@@ -240,7 +240,7 @@ export default function DoctorProfileScreen() {
         </View>
         <TouchableOpacity
           style={styles.bookButton}
-          onPress={() => navigation.navigate('BookAppointment', { doctorId: doctor.id })}
+          onPress={() => navigation.navigate('BookAppointment', { doctor })}
         >
           <Ionicons name="calendar" size={20} color={Colors.textWhite} />
           <Text style={styles.bookButtonText}>Book Appointment</Text>

@@ -1,24 +1,94 @@
-nohup: ignoring input
-
-> zycare-backend@1.0.0 start
-> node server.js
-
 🚀 ZYCARE Backend running on port 5000
-📱 Mobile can connect at: http://192.168.137.14:5000
+📱 Mobile can connect at: http://10.56.198.1:5000
 ✅ MongoDB Connected
-🔐 OTP for 8667273159: 5487
-🔐 OTP for 8667273159: 3362
-🔐 OTP for 8667273159: 3245
-🔐 OTP for 8667273159: 9190
-🔐 OTP for 9923563526: 4415
-🔐 OTP for 9092168246: 6895
-🔐 OTP for 8667273159: 1303
-🔐 OTP for 8667273159: 2799
-🔐 OTP for 8667273159: 5504
-🔐 OTP for 8667273159: 2462
-🔐 OTP for 8667273159: 9820
-🔐 OTP for 8667273159: 3812
-🔐 OTP for 8667273159: 5065
-🔐 OTP for 8667273159: 5300
-🔐 OTP for 8667273159: 9870
-🔐 OTP for 8667273159: 3545
+✅ Email Service Ready
+📡 POST /api/appointments - Booking appointment: {
+  patientId: 'test123',
+  doctorId: 'doc123',
+  date: '2026-02-15',
+  time: '10:00 AM'
+}
+⚠️ Doctor not found in database, using provided data
+🔔 Socket.io: Appointment broadcast sent
+✅ Appointment booked successfully: new ObjectId('698ab871c8398b7bf836887a')
+📧 Sending OTP email to aadhiasarana12@gmail.com...
+✅ OTP email sent successfully to aadhiasarana12@gmail.com
+📨 Message ID: <bea243cf-277e-5b66-9087-72170be946ea@gmail.com>
+🔐 OTP for aadhiasarana12@gmail.com: 261162
+📧 Sending OTP email to aadhiasarana12@gmail.com...
+✅ OTP email sent successfully to aadhiasarana12@gmail.com
+📨 Message ID: <e57715e6-39e8-ff33-2c98-31cf10428f53@gmail.com>
+🔐 OTP for aadhiasarana12@gmail.com: 705171
+📡 GET /api/doctors - Fetching all doctors
+📧 Sending OTP email to aadhisaranaff@gmail.com...
+✅ OTP email sent successfully to aadhisaranaff@gmail.com
+📨 Message ID: <54f6ab7f-7eee-83ad-33b1-7585c7147cea@gmail.com>
+🔐 OTP for aadhisaranaff@gmail.com: 844418
+📧 Welcome email sent to aadhisaranaff@gmail.com: 250 2.0.0 OK  1770699694 d9443c01a7336-2a9522128a5sm118111555ad.86 - gsmtp
+🔌 User connected: ebmC8adMecOlkzUZAAAB
+👨‍⚕️ Doctor null joined room
+🔌 User disconnected: ebmC8adMecOlkzUZAAAB
+🔌 User connected: AmqWxr5jZ6kxDFdqAAAD
+👨‍⚕️ Doctor null joined room
+🔌 User disconnected: AmqWxr5jZ6kxDFdqAAAD
+🔌 User connected: sARqp5TEjbbBBZQbAAAF
+👨‍⚕️ Doctor null joined room
+🔌 User disconnected: sARqp5TEjbbBBZQbAAAF
+📧 Sending OTP email to aadhisaranaff@gmail.com...
+✅ OTP email sent successfully to aadhisaranaff@gmail.com
+📨 Message ID: <5cb58afa-1e53-c86b-8d09-69bee0d975f4@gmail.com>
+🔐 OTP for aadhisaranaff@gmail.com: 190478
+📡 GET /api/doctors - Fetching all doctors
+📧 Sending OTP email to jeevapanda12@gmail.com...
+✅ OTP email sent successfully to jeevapanda12@gmail.com
+📨 Message ID: <d28ae364-d3aa-00ce-2b98-e7483133f3d0@gmail.com>
+🔐 OTP for jeevapanda12@gmail.com: 034308
+📧 Sending OTP email to aadhisaranaff@gmail.com...
+✅ OTP email sent successfully to aadhisaranaff@gmail.com
+📨 Message ID: <96ad00c0-bd74-1620-9dae-c04809a57730@gmail.com>
+🔐 OTP for aadhisaranaff@gmail.com: 493961
+📧 Welcome email sent to jeevapanda12@gmail.com: 250 2.0.0 OK  1770700660 d9443c01a7336-2a951c92fc9sm131724035ad.37 - gsmtp
+🔌 User connected: WAJAGYp2aBA_Ua2OAAAH
+👨‍⚕️ Doctor null joined room
+📡 GET /api/doctors - Fetching all doctors
+🔌 User disconnected: WAJAGYp2aBA_Ua2OAAAH
+🔌 User connected: CJIiIU268XGbHB5MAAAJ
+👨‍⚕️ Doctor null joined room
+🔌 User disconnected: CJIiIU268XGbHB5MAAAJ
+🔌 User connected: Fetyfj-bbIWH0GpJAAAL
+👨‍⚕️ Doctor null joined room
+🔌 User disconnected: Fetyfj-bbIWH0GpJAAAL
+🔌 User connected: Z_woRN9a4mSQ-5SMAAAN
+👨‍⚕️ Doctor null joined room
+🔌 User disconnected: Z_woRN9a4mSQ-5SMAAAN
+🔌 User connected: jkaG19zSV35iHSVeAAAP
+👨‍⚕️ Doctor null joined room
+📹 Consultation started: Doctor undefined with Patient 1
+✅ Consultation ended: 1
+🔌 User disconnected: jkaG19zSV35iHSVeAAAP
+📧 Sending OTP email to aadhiasarana11@gmail.com...
+✅ OTP email sent successfully to aadhiasarana11@gmail.com
+📨 Message ID: <352a94e7-2295-a0e5-7382-a2580524e048@gmail.com>
+🔐 OTP for aadhiasarana11@gmail.com: 140432
+📧 Sending OTP email to test@example.com...
+✅ OTP email sent successfully to test@example.com
+📨 Message ID: <d3962383-20d5-9a8f-6c19-9b6550355e53@gmail.com>
+🔐 Resent OTP for test@example.com: 276945
+📧 Sending OTP email to jeevapanda12@gmail.com...
+✅ OTP email sent successfully to jeevapanda12@gmail.com
+📨 Message ID: <67a7a46a-a4d8-b337-5ede-ae9e6ca02c4e@gmail.com>
+🔐 OTP for jeevapanda12@gmail.com: 311975
+📧 Sending OTP email to aadhisaranaff@gmail.com...
+✅ OTP email sent successfully to aadhisaranaff@gmail.com
+📨 Message ID: <771851e8-1d3f-a3f1-a61b-07089b91cd8a@gmail.com>
+🔐 OTP for aadhisaranaff@gmail.com: 231172
+📧 Sending OTP email to aadhisaranaff@gmail.com...
+✅ OTP email sent successfully to aadhisaranaff@gmail.com
+📨 Message ID: <445a09af-b45c-ac56-caf1-4e7fc1d74904@gmail.com>
+🔐 Resent OTP for aadhisaranaff@gmail.com: 510266
+📧 Sending OTP email to testuser@example.com...
+✅ OTP email sent successfully to testuser@example.com
+📨 Message ID: <86524d1f-0936-fd7f-c463-3560773675cf@gmail.com>
+🔐 OTP for testuser@example.com: 747753
+🔌 User connected: ChP5Etr1y4ltRwmIAAAR
+👨‍⚕️ Doctor null joined room
